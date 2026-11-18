@@ -1,0 +1,19 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  match /reservations/{seatId} {
+   allow read: if true;
+   allow create: if request.auth != null
+    && seatId.matches('B(0[1-9]|[1-4][0-9]|50)-S[1-6]')
+    && request.resource.data.keys().hasOnly(['displayName','familyName','ownerUid','residentConfirmed','gradeConfirmed','createdAt'])
+    && request.resource.data.ownerUid == request.auth.uid
+    && request.resource.data.displayName is string && request.resource.data.displayName.size() > 0 && request.resource.data.displayName.size() <= 70
+    && request.resource.data.familyName is string && request.resource.data.familyName.size() > 0 && request.resource.data.familyName.size() <= 70
+    && request.resource.data.residentConfirmed == true && request.resource.data.gradeConfirmed == true
+    && request.resource.data.createdAt == request.time;
+   allow delete: if request.auth != null && resource.data.ownerUid == request.auth.uid;
+   allow update: if false;
+  }
+  match /{document=**} { allow read, write: if false; }
+ }
+}
